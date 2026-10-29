@@ -101,8 +101,9 @@ const clearSearch = () => {
     </div>
 
     <!-- A native select: on phones it opens the system picker, and it stays one line however
-         many sports a premium key returns. The selected sport's icon sits inside it. -->
-    <div class="relative flex min-w-0 flex-[0_1_16rem] items-center max-sm:flex-auto">
+         many sports a premium key returns. The selected sport's icon sits inside it. Wide
+         enough for "Todos los deportes (10)" on one line. -->
+    <div class="relative flex min-w-0 flex-[0_1_18rem] items-center max-sm:flex-auto">
       <label class="sr-only" for="league-sport">{{ t('filters.sport') }}</label>
       <SportIcon
         class="pointer-events-none absolute left-4 text-[1.25rem]"
@@ -116,7 +117,7 @@ const clearSearch = () => {
       <select
         id="league-sport"
         v-model="sport"
-        class="custom-select min-h-13 w-full cursor-pointer rounded-lg border border-line-strong bg-surface pr-11 pl-12 text-lg font-semibold text-ink transition-[border-color,box-shadow] duration-150 focus-visible:border-accent focus-visible:ring-4 focus-visible:ring-focus-ring focus-visible:outline-none disabled:cursor-progress disabled:text-ink-muted"
+        class="custom-select min-h-13 w-full cursor-pointer rounded-lg whitespace-nowrap border border-line-strong bg-surface pr-11 pl-12 text-lg font-semibold text-ink transition-[border-color,box-shadow] duration-150 focus-visible:border-accent focus-visible:ring-4 focus-visible:ring-focus-ring focus-visible:outline-none disabled:cursor-progress disabled:text-ink-muted"
         :disabled="!ready"
         aria-controls="league-results"
       >

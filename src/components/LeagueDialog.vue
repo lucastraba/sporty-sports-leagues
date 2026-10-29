@@ -102,10 +102,6 @@ const SEASON =
       <div
         class="relative isolate overflow-hidden bg-[radial-gradient(30rem_16rem_at_0%_0%,hsl(var(--hue)_70%_40%/0.35),transparent_70%),linear-gradient(180deg,#0d1117_0%,var(--color-night)_100%)] text-night-ink"
       >
-        <span
-          class="hidden phone:mx-auto phone:mt-2 phone:block phone:h-[0.3rem] phone:w-10 phone:rounded-full phone:bg-white/25"
-          aria-hidden="true"
-        />
         <SportIcon
           class="absolute -top-10 -right-10 -z-1 -rotate-14 text-[12rem] text-[hsl(var(--hue)_70%_70%)] opacity-7"
           :sport="league.sport"
