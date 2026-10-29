@@ -19,6 +19,8 @@ export type MockOptions = {
   failLeagues?: { status: number; times: number }
   /** Which league list to serve. Defaults to 'mixed'. */
   leagues?: keyof typeof LEAGUES
+  /** Answer all_leagues.php with { leagues: null } on the first N calls. */
+  emptyLeagues?: number
 }
 
 export type ApiMock = {
@@ -49,6 +51,7 @@ export const animationsSettled = (page: Page) =>
 export const mockApi = async (page: Page, options: MockOptions = {}): Promise<ApiMock> => {
   const mock: ApiMock = { calls: { leagues: 0, seasons: [] } }
   let failures = options.failLeagues?.times ?? 0
+  let empties = options.emptyLeagues ?? 0
   const wait = () => new Promise((r) => setTimeout(r, options.delayMs ?? 0))
 
   await page.route('https://www.thesportsdb.com/api/v1/json/**', async (route) => {
@@ -59,6 +62,10 @@ export const mockApi = async (page: Page, options: MockOptions = {}): Promise<Ap
       if (failures > 0) {
         failures--
         return route.fulfill({ status: options.failLeagues!.status, body: 'error' })
+      }
+      if (empties > 0) {
+        empties--
+        return json(route, Buffer.from(JSON.stringify({ leagues: null })))
       }
       return json(route, LEAGUES[options.leagues ?? 'mixed'])
     }

@@ -38,6 +38,16 @@ describe('createRequestCache', () => {
     await expect(cache.get('k', load)).resolves.toBe('ok')
   })
 
+  it('does not store a value the caller marks as not worth keeping', async () => {
+    const storage = memoryStorage()
+    const cache = createRequestCache({ storage })
+    const load = vi.fn<() => Promise<string[]>>(async () => [])
+    await cache.get('k', load, { keep: (value) => value.length > 0 })
+    await cache.get('k', load, { keep: (value) => value.length > 0 })
+    expect(load).toHaveBeenCalledTimes(2)
+    expect(storage.data.size).toBe(0)
+  })
+
   it('expires entries after their TTL', async () => {
     let now = 0
     const cache = createRequestCache({ storage: null, now: () => now })

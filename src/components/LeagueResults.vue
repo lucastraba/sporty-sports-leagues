@@ -121,6 +121,8 @@ const emptyMessage = computed(() => {
       illustration="goal"
       :title="t('results.emptyTitle')"
       :message="t('results.emptyMessage')"
+      :action="t('results.retry')"
+      @action="store.reload()"
     />
 
     <StatusPanel

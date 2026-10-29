@@ -81,7 +81,8 @@ export const createSportsDbClient = ({
         leaguesKey,
         async () =>
           parseLeagues(await request(`${root}/all_leagues.php`)).map(withCapturedAlternates),
-        { ttlMs: LEAGUES_TTL_MS },
+        // An empty list is an upstream glitch, not data: don't keep it for four hours.
+        { ttlMs: LEAGUES_TTL_MS, keep: (leagues) => leagues.length > 0 },
       ),
 
     peekStaleLeagues: () => cache.peekStale<League[]>(leaguesKey),

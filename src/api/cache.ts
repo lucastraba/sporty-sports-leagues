@@ -6,7 +6,8 @@
 //   and can render synchronously via peek().
 // - Expired entries stay in storage until a fresh response replaces them: peekStale() returns
 //   them, so the app can show the last list it had when the network is gone.
-// - Failures are never cached, so "Try again" really tries again.
+// - Failures are never cached, so "Try again" really tries again. Neither is a value the
+//   caller marks as not worth keeping (an empty list from a glitch upstream).
 
 export type StorageLike = {
   getItem: (key: string) => string | null
@@ -95,7 +96,10 @@ export const createRequestCache = ({
   const get = <T>(
     key: string,
     load: () => Promise<T>,
-    { ttlMs = defaultTtlMs } = {},
+    {
+      ttlMs = defaultTtlMs,
+      keep = () => true,
+    }: { ttlMs?: number; keep?: (value: T) => boolean } = {},
   ): Promise<T> => {
     const cached = peek<T>(key)
     if (cached !== undefined) return Promise.resolve(cached)
@@ -105,7 +109,7 @@ export const createRequestCache = ({
 
     const request = load()
       .then((value) => {
-        write(key, value, ttlMs)
+        if (keep(value)) write(key, value, ttlMs)
         return value
       })
       .finally(() => inFlight.delete(key))

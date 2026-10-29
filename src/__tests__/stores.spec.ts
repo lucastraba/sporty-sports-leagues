@@ -45,6 +45,17 @@ describe('leagues store', () => {
     expect(store.error).toBeNull()
   })
 
+  it('reload() asks the API again after an empty list', async () => {
+    const { client } = setup()
+    client.getLeagues.mockResolvedValueOnce([])
+    const store = useLeaguesStore()
+    await store.load()
+    expect(store.leagues).toHaveLength(0)
+    await store.reload()
+    expect(client.getLeagues).toHaveBeenCalledTimes(2)
+    expect(store.leagues).toHaveLength(20)
+  })
+
   it('falls back to the saved list when a fresh one fails, and refreshes it in place', async () => {
     const saved = { value: LEAGUES.slice(0, 3), savedAt: 1_700_000_000_000 }
     const { client } = setup({ peekStaleLeagues: () => saved })

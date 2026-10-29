@@ -121,6 +121,15 @@ describe('createSportsDbClient', () => {
     expect(client.peekSeasons('9999')).toBeUndefined()
   })
 
+  it('does not cache an empty league list, so the next load asks again', async () => {
+    const { client, request } = setup()
+    request.mockResolvedValueOnce({ leagues: null })
+    await expect(client.getLeagues()).resolves.toEqual([])
+    expect(client.peekLeagues()).toBeUndefined()
+    await expect(client.getLeagues()).resolves.toHaveLength(10)
+    expect(request).toHaveBeenCalledTimes(2)
+  })
+
   it('keeps a premium key out of storage and its cache apart from the free one', async () => {
     const { client, storage } = setup('secret-key')
     await client.getLeagues()

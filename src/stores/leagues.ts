@@ -67,14 +67,20 @@ export const useLeaguesStore = defineStore('leagues', () => {
     dropUnknownFilters()
   }
 
+  // Asks the API even if a list is showing. An empty list is never cached, so after one
+  // this really goes back to TheSportsDB.
+  const reload = async () => {
+    status.value = 'loading'
+    error.value = null
+    await fetchLeagues()
+  }
+
   const load = async () => {
     if (status.value === 'loading' || status.value === 'ready') {
       dropUnknownFilters()
       return
     }
-    status.value = 'loading'
-    error.value = null
-    await fetchLeagues()
+    await reload()
   }
 
   // Retries a stale list in place: the saved one stays on screen while it tries.
@@ -106,6 +112,7 @@ export const useLeaguesStore = defineStore('leagues', () => {
     hasFilters,
     selectedLeague,
     load,
+    reload,
     refresh,
     clearFilters,
     select: (id: string | null) => (selectedId.value = id),

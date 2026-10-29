@@ -71,6 +71,15 @@ test.describe('league list', () => {
     expect(mock.calls.leagues).toBe(2)
   })
 
+  test('does not keep an empty list, and "Try again" asks again', async ({ page }) => {
+    const mock = await mockApi(page, { emptyLeagues: 1 })
+    await page.goto('/')
+    await expect(page.getByText('No leagues available')).toBeVisible()
+    await page.getByRole('button', { name: 'Try again' }).click()
+    await expect(page.locator('[data-league-id]')).toHaveCount(20)
+    expect(mock.calls.leagues).toBe(2)
+  })
+
   test('shows the saved list when TheSportsDB is unreachable after the cache expires', async ({
     page,
   }) => {
