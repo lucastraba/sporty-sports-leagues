@@ -18,6 +18,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      # The gate: type-check, lint, format, unit tests and e2e on recorded fixtures.
       - run: pnpm run check
+        env:
+          CI: true
+          SKIP_LIVE: 1
+      # The live API smoke test is informative only: TheSportsDB being down or the shared free
+      # key being rate-limited shouldn't fail a correct change. A failure shows as a warning.
+      - run: pnpm exec playwright test e2e/live.spec.ts --project=desktop
+        continue-on-error: true
         env:
           CI: true

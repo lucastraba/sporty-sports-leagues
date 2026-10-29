@@ -2,8 +2,9 @@ import process from 'node:process'
 import { defineConfig, devices } from '@playwright/test'
 
 // E2E runs against the production build (vite preview), with TheSportsDB mocked from
-// recorded fixtures so results are deterministic and the 30 req/min limit never bites.
-// One test (live.spec.ts) hits the real API; skip it offline with SKIP_LIVE=1.
+// recorded fixtures so results are deterministic and the rate limit never bites.
+// One test (live.spec.ts) hits the real API; SKIP_LIVE=1 skips it. CI runs it as a separate
+// step that can't fail the build, so an outage at TheSportsDB doesn't block a correct change.
 const PORT = 4174
 
 export default defineConfig({
@@ -19,7 +20,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   // Tests tagged @desktop run once: keyboard shortcuts, and the live API smoke test
-  // (the free API allows 30 requests per minute). Firefox and WebKit run the rest, because
+  // (the free key allows only a few requests in quick succession). Firefox and WebKit run the rest, because
   // layout differs between engines: the season badge once rendered at 0×0 in Safari only.
   testIgnore: process.env.SKIP_LIVE ? ['**/live.spec.ts'] : [],
   projects: [
