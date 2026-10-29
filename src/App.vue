@@ -13,7 +13,7 @@ const { t } = useI18n()
 const store = useLeaguesStore()
 const { query, sport, selectedId } = storeToRefs(store)
 
-useUrlState({ q: query, sport, league: selectedId })
+useUrlState({ q: query, sport, league: selectedId }, { pushed: ['league'] })
 onMounted(store.load)
 
 // Showing a saved list because the network was down: try again as soon as it's back.

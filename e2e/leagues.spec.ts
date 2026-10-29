@@ -177,6 +177,21 @@ test.describe('season badge', () => {
     await page.mouse.click(5, 5)
     await expect(dialog).toBeHidden()
   })
+
+  test('closes with Back instead of leaving the page', async ({ page }) => {
+    await mockApi(page)
+    await page.goto('/')
+    const search = page.getByRole('searchbox', { name: 'Search' })
+    await search.fill('premier')
+    await page.getByRole('button', { name: /English Premier League/ }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await page.goBack()
+    await expect(dialog).toBeHidden()
+    await expect(page).toHaveURL(/\?q=premier$/)
+    await expect(search).toHaveValue('premier')
+  })
 })
 
 test.describe('localization', () => {

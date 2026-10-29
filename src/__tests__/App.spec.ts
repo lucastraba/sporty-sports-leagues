@@ -189,6 +189,24 @@ describe('App', () => {
     wrapper.unmount()
   })
 
+  it('closes the badge dialog with Back instead of leaving the page', async () => {
+    const { wrapper } = await mountApp()
+    await wrapper.find('#league-search').setValue('premier')
+    await wrapper.find('[data-league-id="4328"]').trigger('click')
+    await flushPromises()
+    expect(window.location.search).toBe('?q=premier&league=4328')
+
+    const popped = new Promise((resolve) =>
+      window.addEventListener('popstate', resolve, { once: true }),
+    )
+    window.history.back()
+    await popped
+    await flushPromises()
+    expect(wrapper.find('dialog').attributes('open')).toBeUndefined()
+    expect(window.location.search).toBe('?q=premier')
+    wrapper.unmount()
+  })
+
   it('focuses the search box with "/"', async () => {
     const { wrapper } = await mountApp()
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }))
