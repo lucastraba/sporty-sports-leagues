@@ -1,0 +1,116 @@
+{
+  "leagues": [
+    {
+      "idLeague": "4328",
+      "strLeague": "English Premier League",
+      "strSport": "Soccer",
+      "strLeagueAlternate": "Premier League, EPL, England"
+    },
+    {
+      "idLeague": "4329",
+      "strLeague": "English League Championship",
+      "strSport": "Soccer",
+      "strLeagueAlternate": "England EFL Championship, English Football League Championship"
+    },
+    {
+      "idLeague": "4330",
+      "strLeague": "Scottish Premier League",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4331",
+      "strLeague": "German Bundesliga",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4332",
+      "strLeague": "Italian Serie A",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4334",
+      "strLeague": "French Ligue 1",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4335",
+      "strLeague": "Spanish La Liga",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4336",
+      "strLeague": "Greek Super League 1",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4337",
+      "strLeague": "Dutch Eredivisie",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4338",
+      "strLeague": "Belgian Pro League",
+      "strSport": "Soccer"
+    },
+    {
+      "idLeague": "4734",
+      "strLeague": "Argentine LNB",
+      "strSport": "Basketball",
+      "strLeagueAlternate": "Liga Nacional de Básquet"
+    },
+    {
+      "idLeague": "4434",
+      "strLeague": "Australian NBL",
+      "strSport": "Basketball",
+      "strLeagueAlternate": ""
+    },
+    {
+      "idLeague": "5113",
+      "strLeague": "Australian WNBL",
+      "strSport": "Basketball",
+      "strLeagueAlternate": "Women"
+    },
+    {
+      "idLeague": "5351",
+      "strLeague": "NBL1 West",
+      "strSport": "Basketball",
+      "strLeagueAlternate": ""
+    },
+    {
+      "idLeague": "5667",
+      "strLeague": "NBL1 Central",
+      "strSport": "Basketball",
+      "strLeagueAlternate": ""
+    },
+    {
+      "idLeague": "4489",
+      "strLeague": "V8 Supercars",
+      "strSport": "Motorsport",
+      "strLeagueAlternate": "Supercars Championship, Repco Supercars Championship, Supercars"
+    },
+    {
+      "idLeague": "4372",
+      "strLeague": "BTCC",
+      "strSport": "Motorsport",
+      "strLeagueAlternate": "British Touring Car Championship"
+    },
+    {
+      "idLeague": "4410",
+      "strLeague": "British GT Championship",
+      "strSport": "Motorsport",
+      "strLeagueAlternate": ""
+    },
+    {
+      "idLeague": "4730",
+      "strLeague": "World Rallycross Championship",
+      "strSport": "Motorsport",
+      "strLeagueAlternate": "European Rallycross Championship"
+    },
+    {
+      "idLeague": "5873",
+      "strLeague": "WorldSSP",
+      "strSport": "Motorsport",
+      "strLeagueAlternate": "Supersport World Championship, WSS, WSSP"
+    }
+  ]
+}
