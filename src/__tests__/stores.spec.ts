@@ -113,13 +113,28 @@ describe('leagues store', () => {
 })
 
 describe('seasons store', () => {
-  it('loads once per league', async () => {
+  it('starts one request per league while it is loading', async () => {
     const { client } = setup()
     const store = useSeasonsStore()
     await Promise.all([store.load('4328'), store.load('4328')])
-    await store.load('4328')
     expect(client.getSeasons).toHaveBeenCalledTimes(1)
     expect(store.byLeague['4328']).toEqual({ status: 'ready', seasons: SEASONS_4328 })
+  })
+
+  it('follows the cache: fresh badges need no request, expired ones are fetched again', async () => {
+    let fresh: typeof SEASONS_4328 | undefined
+    const { client } = setup({ peekSeasons: () => fresh })
+    const store = useSeasonsStore()
+    await store.load('4328')
+    fresh = SEASONS_4328
+    await store.load('4328')
+    expect(client.getSeasons).toHaveBeenCalledTimes(1)
+
+    fresh = undefined // the TTL has passed
+    const reloading = store.load('4328')
+    expect(store.byLeague['4328']?.status).toBe('ready') // the old badges stay up meanwhile
+    await reloading
+    expect(client.getSeasons).toHaveBeenCalledTimes(2)
   })
 
   it('uses the cache synchronously when it can', async () => {

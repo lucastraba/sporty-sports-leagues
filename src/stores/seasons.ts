@@ -11,13 +11,14 @@ export type SeasonsState =
 
 // Season badges per league. State is keyed by league id, so opening league A and then
 // league B before A has answered can't show A's badge under B's name.
+// Freshness belongs to the request cache: every open asks it, so its TTL applies here too.
 export const useSeasonsStore = defineStore('seasons', () => {
   const api = useSportsDb()
   const byLeague = ref<Record<string, SeasonsState>>({})
 
   const load = async (leagueId: string) => {
     const current = byLeague.value[leagueId]
-    if (current && current.status !== 'error') return
+    if (current?.status === 'loading') return
 
     const cached = api.peekSeasons(leagueId)
     if (cached) {
@@ -25,7 +26,8 @@ export const useSeasonsStore = defineStore('seasons', () => {
       return
     }
 
-    byLeague.value[leagueId] = { status: 'loading' }
+    // Expired badges stay on screen while fresh ones load.
+    if (current?.status !== 'ready') byLeague.value[leagueId] = { status: 'loading' }
     try {
       byLeague.value[leagueId] = { status: 'ready', seasons: await api.getSeasons(leagueId) }
     } catch (e) {
