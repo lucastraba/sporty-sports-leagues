@@ -1,6 +1,6 @@
 # AI tools
 
-I used Claude Code (Anthropic) in a terminal, with access to the repo, a shell and a headless browser. My own time was about 90 minutes, split across short sessions: the first build, a visual pass, a move to Tailwind with Spanish added, and a final pass that checked the app against the brief and its likely user. Claude Code wrote most of the code and tests; I decided what to build, steered each session and reviewed what came back.
+I used Claude Code (Anthropic) in a terminal, with access to the repo, a shell and a headless browser, and Codex (OpenAI, GPT 6.1) for a second review at the end. My own time was about 90 minutes, split across short sessions: the first build, a visual pass, a move to Tailwind with Spanish added, and a final pass that checked the app against the brief and its likely user. Claude Code wrote most of the code and tests; I decided what to build, steered each session and reviewed what came back.
 
 ## What it did
 
@@ -30,6 +30,15 @@ I had three Claude Code agents review the repo as a hiring panel would: one read
 - In Spanish, "Todos los deportes (10)" wrapped onto two lines on desktop. The select is wider and stays on one line.
 
 The review also pointed out what the notes were missing: the time spent, how I read the stray `strDescriptionEN` in the brief, and that the commit history was regrouped. Those are now in the README.
+
+I then asked a different model, GPT 6.1 in Codex, for the same kind of review. It passed the app and found four smaller problems, which I fixed too:
+
+- A season response without its `seasons` field was read as "no badge" and cached for a day.
+- Values read back from `localStorage` weren't checked, so a malformed one emptied the list.
+- The seasons store kept a league's badges past the cache's 24-hour TTL.
+- CI failed whenever TheSportsDB was down, because the live smoke test was part of the gate.
+
+At the same time I moved validation to Zod, so API responses and saved data go through the same schemas.
 
 ## Decisions I kept
 

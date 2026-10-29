@@ -19,9 +19,9 @@ pnpm dev             # http://localhost:5173
 
 | Command | What it does |
 | --- | --- |
-| `pnpm test` | 87 unit and component tests (Vitest) |
-| `pnpm test:e2e` | 78 browser tests in Chrome (desktop and mobile), Firefox and WebKit (Playwright; first run: `pnpm exec playwright install chromium firefox webkit`) |
-| `pnpm check` | Type-check, lint, format check, unit and e2e tests: what CI runs |
+| `pnpm test` | 93 unit and component tests (Vitest) |
+| `pnpm test:e2e` | 82 browser tests in Chrome (desktop and mobile), Firefox and WebKit (Playwright; first run: `pnpm exec playwright install chromium firefox webkit`) |
+| `pnpm check` | Type-check, lint, format check, unit and e2e tests: what CI runs, with the live API test as a separate step |
 | `pnpm build` | Type-check and production build to `dist/` |
 
 No API key is needed. `VITE_SPORTSDB_API_KEY=<key>` in `.env.local` uses a premium key instead.
@@ -71,11 +71,11 @@ src/
                 StatusPanel · SportTag · SportIcon · HighlightText · CountUp · LocaleSwitcher
 ```
 
-Responses are parsed at the edge. The API is loosely typed (nulls, empty strings, a comma-separated alias field), so `parse.ts` validates every response and maps it to the app's own `League` and `Season` types. A malformed entry is skipped instead of breaking the list.
+Responses are validated at the edge with Zod. The API is loosely typed (nulls, empty strings, a comma-separated alias field), so `parse.ts` checks every response against a schema and maps it to the app's own `League` and `Season`, which are Zod schemas too. A malformed entry is skipped instead of breaking the list. A response with no list field at all is an error, not an empty answer that would be cached; `{ "seasons": null }` is how the API says "none". I used `zod/mini`, the tree-shakeable build: it adds 5.8 kB gzipped, where the full `zod` import would add 24 kB.
 
-The cache is about 120 lines of my own code rather than a library, because two GET endpoints don't justify TanStack Query. It shares one in-flight request between callers, so two quick clicks make one fetch. Leagues are kept for 4 hours, matching the server's `max-age`, and badges for 24. Entries persist in `localStorage` and survive quota errors and private mode. Failures are never cached, so "Try again" really tries again, and neither is an empty league list, which only comes from a glitch upstream. Expired entries stay in storage until a fresh response replaces them, which is what the offline fallback reads. A reload renders the cached list on the first frame, without a spinner.
+The cache is about 140 lines of my own code rather than a library, because two GET endpoints don't justify TanStack Query. It shares one in-flight request between callers, so two quick clicks make one fetch. Leagues are kept for 4 hours, matching the server's `max-age`, and badges for 24. Entries persist in `localStorage` and survive quota errors and private mode. Every read names the schema it expects, so a stored value from an older version of the app, or a hand edit, is dropped and fetched again instead of reaching the UI. Failures are never cached, so "Try again" really tries again, and neither is an empty league list, which only comes from a glitch upstream. Expired entries stay in storage until a fresh response replaces them, which is what the offline fallback reads. A reload renders the cached list on the first frame, without a spinner.
 
-Badge state in Pinia is keyed by league id, so opening league A and then B before A answers can't show A's badge under B's name.
+Badge state in Pinia is keyed by league id, so opening league A and then B before A answers can't show A's badge under B's name. The store asks the cache every time a league opens, so the cache's TTL is the only freshness rule.
 
 Errors are explained, not swallowed. Network errors, timeouts and 5xx get one retry with backoff; 4xx and rate limits get none. Stores keep the error's kind, and the UI turns it into a message in the user's language.
 
@@ -83,7 +83,7 @@ The sport filter is a native `<select>`. On phones it opens the system picker, a
 
 The dialog is a native `<dialog>`: `showModal()` gives focus trapping, Escape, an inert background and focus return without a library.
 
-Styles are Tailwind v4 over design tokens, with no UI kit. Tailwind's default palette is off, so every class maps to a token, and the dark theme only swaps token values. The bundle is 67 kB of JavaScript and 12 kB of CSS gzipped.
+Styles are Tailwind v4 over design tokens, with no UI kit. Tailwind's default palette is off, so every class maps to a token, and the dark theme only swaps token values. The bundle is 74 kB of JavaScript and 12 kB of CSS gzipped.
 
 Body text uses the system font, which costs nothing to load. Headings, scores and league names use Archivo, cut from the 90 kB variable font down to one static condensed ExtraBold instance of 14.5 kB with fontTools' instancer. Accented Latin outside Latin-1 is a second 13 kB file that the browser fetches only when a league name needs it. Archivo is under the OFL, and the licence ships next to the files in `src/assets/fonts/`.
 
@@ -93,7 +93,7 @@ Localization uses vue-i18n. `es.ts` is typed against `en.ts`, so a missing key f
 
 ## Testing
 
-The unit tests cover HTTP (retry, timeout, 429 with and without a readable status, abort), the cache (TTL, de-duplication, persistence, corrupt storage, quota, stale entries, empty lists), parsing against real responses, search ranking and badge choice. Component tests mount the whole app with a fake API client. The Playwright tests run against the production build in desktop Chrome, a Pixel 7 viewport, Firefox and WebKit, with the API mocked from recorded fixtures. They cover nickname search on the free key's real list, caching across a reload (counting requests), a slow API, the saved list when the API is unreachable after the cache expires, focus return after Escape, Back closing the dialog, an empty list not being kept, no horizontal scroll at 320px, and axe in both themes and both languages. One smoke test hits the live API, including a nickname search (`SKIP_LIVE=1` skips it).
+The unit tests cover HTTP (retry, timeout, 429 with and without a readable status, abort), the cache (TTL, de-duplication, persistence, corrupt storage, values that don't match their schema, quota, stale entries, empty lists), parsing against real and malformed responses, search ranking and badge choice. Component tests mount the whole app with a fake API client. The Playwright tests run against the production build in desktop Chrome, a Pixel 7 viewport, Firefox and WebKit, with the API mocked from recorded fixtures. They cover nickname search on the free key's real list, caching across a reload (counting requests), a slow API, the saved list when the API is unreachable after the cache expires, focus return after Escape, Back closing the dialog, an empty list not being kept, a malformed saved list being replaced, no horizontal scroll at 320px, and axe in both themes and both languages. One smoke test hits the live API, including a nickname search (`SKIP_LIVE=1` skips it). CI runs it as its own step that can't fail the build, so an outage at TheSportsDB doesn't block a correct change.
 
 ## With more time
 
