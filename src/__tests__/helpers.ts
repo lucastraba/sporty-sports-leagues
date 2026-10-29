@@ -8,7 +8,7 @@ import mixedLeagues from '@/api/__fixtures__/all_leagues.mixed.json'
 import seasons4328 from '@/api/__fixtures__/seasons_4328.json'
 
 // Real API data: the free key's 10 Soccer leagues (alternate names filled in from
-// search_all_leagues.php) plus 5 Basketball and 5 Motorsport leagues, captured 2026-10-27.
+// search_all_leagues.php) plus 5 Basketball and 5 Motorsport leagues.
 export const LEAGUES: League[] = parseLeagues(mixedLeagues)
 export const SEASONS_4328: Season[] = parseSeasons(seasons4328)
 

@@ -1,6 +1,6 @@
 # AI tools
 
-I used Claude Code (Anthropic) in a terminal, with access to the repo, a shell and a headless browser, over several sessions: the first build, a visual pass, a move to Tailwind with Spanish added, and a final pass that checked the app against the brief and its likely user.
+I used Claude Code (Anthropic) in a terminal, with access to the repo, a shell and a headless browser. My own time was about 90 minutes, split across short sessions: the first build, a visual pass, a move to Tailwind with Spanish added, and a final pass that checked the app against the brief and its likely user. Claude Code wrote most of the code and tests; I decided what to build, steered each session and reviewed what came back.
 
 ## What it did
 
@@ -18,6 +18,18 @@ I used Claude Code (Anthropic) in a terminal, with access to the repo, a shell a
 - Vue drops whitespace-only text that contains a line break, so Prettier's wrapping glued "EPL" to "+1 more". The template now has an explicit space, and a test checks it.
 - Running the e2e suite in Firefox and WebKit, not only Chrome, found two Safari bugs. The season badge rendered at 0×0: its size was a percentage of a wrapper that shrink-wrapped it, which Chrome and Firefox resolve and WebKit doesn't. And Safari doesn't focus a button on click, so closing the dialog left focus nowhere; it now goes back to the card. Both engines stay in the suite.
 - A ranking test was wrong, not the code: a name that starts with the query ("NBL1 West") should rank above one where a later word does ("Australian NBL").
+
+## A last review before sending
+
+I had three Claude Code agents review the repo as a hiring panel would: one read the code, one checked it against the brief line by line, and one used the running site in a browser. They found five things worth fixing, and I fixed them:
+
+- A real 429 arrives without a CORS header, so it looked like a dropped connection: it was retried, which extends the lockout, and the message blamed the user's connection. A failure right after a burst of requests is now treated as the rate limit.
+- An empty league list from TheSportsDB was cached for four hours, with no way to retry. It is no longer cached, and the empty state has "Try again".
+- Opening a league replaced the history entry, so Back on a phone left the site instead of closing the bottom sheet. Opening now pushes an entry, and Back closes the sheet.
+- The bottom sheet had a drag handle that didn't drag. It's gone.
+- In Spanish, "Todos los deportes (10)" wrapped onto two lines on desktop. The select is wider and stays on one line.
+
+The review also pointed out what the notes were missing: the time spent, how I read the stray `strDescriptionEN` in the brief, and that the commit history was regrouped. Those are now in the README.
 
 ## Decisions I kept
 

@@ -10,7 +10,7 @@ A Vue 3 single-page app that lists sports leagues from [TheSportsDB](https://www
 
 ## Run it
 
-Needs Node 22.18+ or 24.12+ and pnpm (`corepack enable` picks up the version pinned in `package.json`).
+Needs Node 22.18+ or 24.12+ (`.nvmrc` has 24) and pnpm (`npm install -g pnpm` if you don't have it).
 
 ```sh
 pnpm install
@@ -19,12 +19,16 @@ pnpm dev             # http://localhost:5173
 
 | Command | What it does |
 | --- | --- |
-| `pnpm test` | 80 unit and component tests (Vitest) |
-| `pnpm test:e2e` | 70 browser tests in Chrome (desktop and mobile), Firefox and WebKit (Playwright; first run: `pnpm exec playwright install chromium firefox webkit`) |
+| `pnpm test` | 87 unit and component tests (Vitest) |
+| `pnpm test:e2e` | 78 browser tests in Chrome (desktop and mobile), Firefox and WebKit (Playwright; first run: `pnpm exec playwright install chromium firefox webkit`) |
 | `pnpm check` | Type-check, lint, format check, unit and e2e tests: what CI runs |
 | `pnpm build` | Type-check and production build to `dist/` |
 
 No API key is needed. `VITE_SPORTSDB_API_KEY=<key>` in `.env.local` uses a premium key instead.
+
+## Time
+
+About 90 minutes of my own time, as the brief suggests. Claude Code wrote most of the code and tests (see [AI_NOTES.md](AI_NOTES.md)); my time went on reading the brief and the API, deciding what the app should do and for whom, and reviewing and testing what came back.
 
 ## Who it's for
 
@@ -37,7 +41,7 @@ The brief describes this as a component of an online bookmaker. I assumed its us
 - A sport dropdown built from the data, with counts that follow the search.
 - Clicking a league opens its season badge in a dialog (a bottom sheet on phones), starting at the latest season that has one, with the other seasons in a strip.
 - Loading skeletons, errors with retry, empty states and a "no badge" state.
-- The URL holds the filters and the open league (`?q=epl&sport=Soccer&league=4328`), so any view can be shared.
+- The URL holds the filters and the open league (`?q=epl&sport=Soccer&league=4328`), so any view can be shared. Opening a league adds a history entry, so Back (or the back gesture on Android) closes the dialog instead of leaving the site.
 - English and Spanish, following the browser, with a switcher that remembers the choice.
 - Keyboard, screen reader, light and dark themes, and reduced motion are covered; axe reports no violations.
 
@@ -48,12 +52,13 @@ The brief describes this as a component of an online bookmaker. I assumed its us
    - the UI is built from the data rather than hardcoded, and the app tells the user it is showing a sample;
    - the alternate names for the 10 sample leagues were captured from `lookupleague.php`, which does return them, by `scripts/capture-alternate-names.mjs`, and ship with the app in `src/api/alternateNames.json` (under 1 kB). They fill in only where the API sends none, so a premium list with its own names is untouched. Fetching them live would take one request per league, up to 17 kB each, and the free key's rate limit (below) would then block the badge request;
    - the tests and screenshots also use real API data that adds Basketball and Motorsport leagues, so the sport filter is exercised for real.
-3. Many seasons have no badge (`strBadge: null`), and some leagues have none at all. The app picks the latest season that has one and says so when none does.
-4. The free key is documented at 30 requests per minute, but I measured HTTP 429 after about 10 requests in five seconds. The 429 has no CORS header, so the browser reports it as a network error. A first visit makes one request, and each badge one more; after that the cache answers. A 429 is never retried automatically.
+3. The free key returns only a league's five oldest seasons, so the EPL opens on its 1996–97 badge; a premium key returns them all. A season's `strBadge` can be null, so the app picks the latest season that has one, and says so when none does.
+4. The free key is documented at 30 requests per minute, but I measured HTTP 429 after about 10 requests in five seconds. The 429 has no CORS header, so the browser can't read it: the request fails the same way a dropped connection does. The client counts its own requests, and a failure after eight or more in the last minute, while the browser is online, is treated as the rate limit. It isn't retried, and the message says to wait a minute rather than to check the connection. A first visit makes one request, and each badge one more; after that the cache answers.
+5. The brief's caching line ends in `strDescriptionEN`, which reads like a stray paste. All Leagues doesn't return that field; only `lookupleague.php` does, at one request per league. I took it as noise and left the description out. If it was meant as a field to show, it belongs in the badge dialog, fetched alongside the badge and cached the same way.
 
 ## Design decisions
 
-Code is split into layers. `api/` knows HTTP and TheSportsDB, `domain/` is pure functions (search, ranking, badge choice), `stores/` hold state, and components render. Each layer is tested on its own.
+Code is split into layers. `api/` knows HTTP and TheSportsDB, `domain/` is pure functions (search, ranking, badge choice), `stores/` hold state, and components render. Each layer is tested on its own. The commit history follows the same layers: I regrouped it for review, so it shows the structure rather than the order the work was done in.
 
 ```
 src/
@@ -68,11 +73,11 @@ src/
 
 Responses are parsed at the edge. The API is loosely typed (nulls, empty strings, a comma-separated alias field), so `parse.ts` validates every response and maps it to the app's own `League` and `Season` types. A malformed entry is skipped instead of breaking the list.
 
-The cache is about 120 lines of my own code rather than a library, because two GET endpoints don't justify TanStack Query. It shares one in-flight request between callers, so two quick clicks make one fetch. Leagues are kept for 4 hours, matching the server's `max-age`, and badges for 24. Entries persist in `localStorage` and survive quota errors and private mode. Failures are never cached, so "Try again" really tries again. Expired entries stay in storage until a fresh response replaces them, which is what the offline fallback reads. A reload renders the cached list on the first frame, without a spinner.
+The cache is about 120 lines of my own code rather than a library, because two GET endpoints don't justify TanStack Query. It shares one in-flight request between callers, so two quick clicks make one fetch. Leagues are kept for 4 hours, matching the server's `max-age`, and badges for 24. Entries persist in `localStorage` and survive quota errors and private mode. Failures are never cached, so "Try again" really tries again, and neither is an empty league list, which only comes from a glitch upstream. Expired entries stay in storage until a fresh response replaces them, which is what the offline fallback reads. A reload renders the cached list on the first frame, without a spinner.
 
 Badge state in Pinia is keyed by league id, so opening league A and then B before A answers can't show A's badge under B's name.
 
-Errors are explained, not swallowed. Network errors, timeouts and 5xx get one retry with backoff; 4xx and 429 get none. Stores keep the error's kind, and the UI turns it into a message in the user's language.
+Errors are explained, not swallowed. Network errors, timeouts and 5xx get one retry with backoff; 4xx and rate limits get none. Stores keep the error's kind, and the UI turns it into a message in the user's language.
 
 The sport filter is a native `<select>`. On phones it opens the system picker, and it stays one line when a premium key returns dozens of sports. The selected sport's icon shows inside it. With a mouse, browsers that support customizable selects (Chrome and Edge 135+, and current WebKit) draw the option list in the app's style, with each sport's icon; everywhere else the browser's own list is used.
 
@@ -88,7 +93,7 @@ Localization uses vue-i18n. `es.ts` is typed against `en.ts`, so a missing key f
 
 ## Testing
 
-The unit tests cover HTTP (retry, timeout, 429, abort), the cache (TTL, de-duplication, persistence, corrupt storage, quota, stale entries), parsing against real responses, search ranking and badge choice. Component tests mount the whole app with a fake API client. The Playwright tests run against the production build in desktop Chrome, a Pixel 7 viewport, Firefox and WebKit, with the API mocked from recorded fixtures. They cover nickname search on the free key's real list, caching across a reload (counting requests), a slow API, the saved list when the API is unreachable after the cache expires, focus return after Escape, no horizontal scroll at 320px, and axe in both themes and both languages. One smoke test hits the live API, including a nickname search (`SKIP_LIVE=1` skips it).
+The unit tests cover HTTP (retry, timeout, 429 with and without a readable status, abort), the cache (TTL, de-duplication, persistence, corrupt storage, quota, stale entries, empty lists), parsing against real responses, search ranking and badge choice. Component tests mount the whole app with a fake API client. The Playwright tests run against the production build in desktop Chrome, a Pixel 7 viewport, Firefox and WebKit, with the API mocked from recorded fixtures. They cover nickname search on the free key's real list, caching across a reload (counting requests), a slow API, the saved list when the API is unreachable after the cache expires, focus return after Escape, Back closing the dialog, an empty list not being kept, no horizontal scroll at 320px, and axe in both themes and both languages. One smoke test hits the live API, including a nickname search (`SKIP_LIVE=1` skips it).
 
 ## With more time
 
