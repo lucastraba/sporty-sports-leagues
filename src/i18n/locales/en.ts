@@ -63,7 +63,7 @@ export default {
     errorTitle: 'Couldn’t load the season badge',
     retry: 'Try again',
     noBadgeTitle: 'No badge on file',
-    noBadgeMessage: 'TheSportsDB has no season badges for this league yet.',
+    noBadgeMessage: 'None of the seasons TheSportsDB sent for this league has a badge.',
     badgeAlt: '{league} badge, {season} season',
     badgeFailed: 'The badge image could not be loaded.',
     season: 'Season',

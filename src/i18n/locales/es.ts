@@ -62,7 +62,7 @@ const es: typeof en = {
     errorTitle: 'No se pudo cargar el escudo',
     retry: 'Reintentar',
     noBadgeTitle: 'Sin escudo registrado',
-    noBadgeMessage: 'TheSportsDB todavía no tiene escudos de temporada para esta liga.',
+    noBadgeMessage: 'Ninguna de las temporadas que envió TheSportsDB para esta liga tiene escudo.',
     badgeAlt: 'Escudo de {league}, temporada {season}',
     badgeFailed: 'No se pudo cargar la imagen del escudo.',
     season: 'Temporada',
