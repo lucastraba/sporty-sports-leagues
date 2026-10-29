@@ -71,6 +71,22 @@ test.describe('league list', () => {
     expect(mock.calls.leagues).toBe(2)
   })
 
+  test('drops a malformed saved list and loads a fresh one', async ({ page }) => {
+    const mock = await mockApi(page)
+    // A saved league without alternateNames, as an older version or a hand edit might leave.
+    await page.addInitScript(() => {
+      const league = { id: '4328', name: 'English Premier League', sport: 'Soccer' }
+      const savedAt = Date.now()
+      localStorage.setItem(
+        'sportsdb:v2:free:leagues',
+        JSON.stringify({ value: [league], savedAt, expiresAt: savedAt + 3_600_000 }),
+      )
+    })
+    await page.goto('/')
+    await expect(page.locator('[data-league-id]')).toHaveCount(20)
+    expect(mock.calls.leagues).toBe(1)
+  })
+
   test('does not keep an empty list, and "Try again" asks again', async ({ page }) => {
     const mock = await mockApi(page, { emptyLeagues: 1 })
     await page.goto('/')

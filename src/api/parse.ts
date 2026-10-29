@@ -1,26 +1,49 @@
 // Runtime checks for TheSportsDB responses. The API is community-maintained and loosely
 // typed (empty strings, nulls, missing fields), so nothing past this file trusts it blindly.
 
+import * as z from 'zod/mini'
 import type { League, Season } from '@/domain/types'
 import { ApiError } from './http'
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+// Non-empty once trimmed.
+const requiredText = z.string().check(z.trim(), z.minLength(1))
+// The API says "none" with null, '' or by leaving the field out; all become ''.
+const optionalText = z.pipe(
+  z.nullish(z.string()),
+  z.transform((value) => value?.trim() ?? ''),
+)
 
-const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
+const ApiLeague = z.object({
+  idLeague: requiredText,
+  strLeague: requiredText,
+  strSport: optionalText,
+  strLeagueAlternate: optionalText,
+})
 
-const listField = (data: unknown, field: string): unknown[] => {
-  if (!isRecord(data)) {
+const ApiSeason = z.object({
+  strSeason: requiredText,
+  strBadge: optionalText,
+})
+
+// "Nothing found" is { leagues: null }. A response without the field at all is not an answer
+// to the question asked, so it's an error rather than an empty list that gets cached.
+const LeaguesResponse = z.object({ leagues: z.nullable(z.array(z.unknown())) })
+const SeasonsResponse = z.object({ seasons: z.nullable(z.array(z.unknown())) })
+
+const parseResponse = <T>(schema: z.ZodMiniType<T>, data: unknown): T => {
+  const result = schema.safeParse(data)
+  if (!result.success) {
     throw new ApiError('invalid-response', 'TheSportsDB sent an unexpected response.')
   }
-  const list = data[field]
-  // The API answers "nothing found" with { field: null }.
-  if (list == null) return []
-  if (!Array.isArray(list)) {
-    throw new ApiError('invalid-response', 'TheSportsDB sent an unexpected response.')
-  }
-  return list
+  return result.data
 }
+
+// One malformed entry is skipped instead of failing the whole list.
+const validEntries = <T>(schema: z.ZodMiniType<T>, items: unknown[] | null): T[] =>
+  (items ?? []).flatMap((item) => {
+    const result = schema.safeParse(item)
+    return result.success ? [result.data] : []
+  })
 
 export const splitAlternateNames = (raw: string, mainName: string): string[] => {
   const seen = new Set([mainName.toLocaleLowerCase()])
@@ -38,27 +61,21 @@ export const splitAlternateNames = (raw: string, mainName: string): string[] => 
 export const parseLeagues = (data: unknown): League[] => {
   const seenIds = new Set<string>()
   const leagues: League[] = []
-  for (const item of listField(data, 'leagues')) {
-    if (!isRecord(item)) continue
-    const id = text(item.idLeague)
-    const name = text(item.strLeague)
-    if (!id || !name || seenIds.has(id)) continue
-    seenIds.add(id)
+  for (const item of validEntries(ApiLeague, parseResponse(LeaguesResponse, data).leagues)) {
+    if (seenIds.has(item.idLeague)) continue
+    seenIds.add(item.idLeague)
     leagues.push({
-      id,
-      name,
-      sport: text(item.strSport) || 'Other',
-      alternateNames: splitAlternateNames(text(item.strLeagueAlternate), name),
+      id: item.idLeague,
+      name: item.strLeague,
+      sport: item.strSport || 'Other',
+      alternateNames: splitAlternateNames(item.strLeagueAlternate, item.strLeague),
     })
   }
   return leagues
 }
 
-export const parseSeasons = (data: unknown): Season[] => {
-  return listField(data, 'seasons').flatMap((item) => {
-    if (!isRecord(item)) return []
-    const season = text(item.strSeason)
-    if (!season) return []
-    return [{ season, badgeUrl: text(item.strBadge) || null }]
-  })
-}
+export const parseSeasons = (data: unknown): Season[] =>
+  validEntries(ApiSeason, parseResponse(SeasonsResponse, data).seasons).map((item) => ({
+    season: item.strSeason,
+    badgeUrl: item.strBadge || null,
+  }))

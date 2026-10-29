@@ -4,10 +4,14 @@
 // - Concurrent callers share one in-flight request (two quick clicks = one fetch).
 // - Entries are mirrored to localStorage, so a reload inside the TTL makes no request
 //   and can render synchronously via peek().
+// - Every read names the schema it expects. A stored entry that doesn't match it (an older
+//   version of the app, a hand edit) is dropped and refetched instead of reaching the UI.
 // - Expired entries stay in storage until a fresh response replaces them: peekStale() returns
 //   them, so the app can show the last list it had when the network is gone.
 // - Failures are never cached, so "Try again" really tries again. Neither is a value the
 //   caller marks as not worth keeping (an empty list from a glitch upstream).
+
+import * as z from 'zod/mini'
 
 export type StorageLike = {
   getItem: (key: string) => string | null
@@ -31,6 +35,11 @@ type Entry<T> = {
 
 export type StaleEntry<T> = { value: T; savedAt: number }
 
+export type Schema<T> = z.ZodMiniType<T>
+
+const entrySchema = <T>(value: Schema<T>) =>
+  z.object({ value, savedAt: z.number(), expiresAt: z.number() })
+
 // Safari private mode and some embedded browsers throw on access or on write.
 const usableLocalStorage = (): StorageLike | null => {
   try {
@@ -53,33 +62,38 @@ export const createRequestCache = ({
   const memory = new Map<string, Entry<unknown>>()
   const inFlight = new Map<string, Promise<unknown>>()
 
+  const parseStored = (raw: string): unknown => {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return undefined
+    }
+  }
+
   // Any entry, fresh or expired. Expired ones are kept: they are the offline fallback.
-  const read = <T>(key: string): Entry<T> | undefined => {
+  // Memory only ever holds values this session loaded, so only storage is checked.
+  const read = <T>(key: string, schema: Schema<T>): Entry<T> | undefined => {
     const hit = memory.get(key)
     if (hit) return hit as Entry<T>
 
     const raw = storage?.getItem(namespace + key)
     if (raw == null) return undefined
-    try {
-      const stored = JSON.parse(raw) as Entry<T>
-      if (typeof stored?.expiresAt === 'number' && typeof stored.savedAt === 'number') {
-        memory.set(key, stored)
-        return stored
-      }
-    } catch {
-      // Corrupt entry: dropped below, and refetched.
+    const stored = entrySchema(schema).safeParse(parseStored(raw))
+    if (stored.success) {
+      memory.set(key, stored.data)
+      return stored.data
     }
     storage?.removeItem(namespace + key)
     return undefined
   }
 
-  const peek = <T>(key: string): T | undefined => {
-    const entry = read<T>(key)
+  const peek = <T>(key: string, schema: Schema<T>): T | undefined => {
+    const entry = read(key, schema)
     return entry && entry.expiresAt > now() ? entry.value : undefined
   }
 
-  const peekStale = <T>(key: string): StaleEntry<T> | undefined => {
-    const entry = read<T>(key)
+  const peekStale = <T>(key: string, schema: Schema<T>): StaleEntry<T> | undefined => {
+    const entry = read(key, schema)
     return entry && { value: entry.value, savedAt: entry.savedAt }
   }
 
@@ -97,11 +111,12 @@ export const createRequestCache = ({
     key: string,
     load: () => Promise<T>,
     {
+      schema,
       ttlMs = defaultTtlMs,
       keep = () => true,
-    }: { ttlMs?: number; keep?: (value: T) => boolean } = {},
+    }: { schema: Schema<T>; ttlMs?: number; keep?: (value: T) => boolean },
   ): Promise<T> => {
-    const cached = peek<T>(key)
+    const cached = peek(key, schema)
     if (cached !== undefined) return Promise.resolve(cached)
 
     const pending = inFlight.get(key)

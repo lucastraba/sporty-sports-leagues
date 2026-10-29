@@ -1,4 +1,5 @@
-import type { League, Season } from '@/domain/types'
+import * as z from 'zod/mini'
+import { LeagueSchema, SeasonSchema, type League, type Season } from '@/domain/types'
 import { createRequestCache, type RequestCache, type StaleEntry } from './cache'
 import { createBurstCounter, getJson } from './http'
 import { parseLeagues, parseSeasons, splitAlternateNames } from './parse'
@@ -14,6 +15,9 @@ export const API_BASE_URL = 'https://www.thesportsdb.com/api/v1/json'
 // Season badges are historical and change rarely.
 const LEAGUES_TTL_MS = 4 * 60 * 60 * 1000
 const SEASONS_TTL_MS = 24 * 60 * 60 * 1000
+
+const LeaguesSchema = z.array(LeagueSchema)
+const SeasonsSchema = z.array(SeasonSchema)
 
 // The free key's list leaves strLeagueAlternate empty, so "EPL" would find nothing. The names
 // were captured from lookupleague.php by scripts/capture-alternate-names.mjs: fetching them
@@ -74,7 +78,7 @@ export const createSportsDbClient = ({
   return {
     isFreeTier,
 
-    peekLeagues: () => cache.peek<League[]>(leaguesKey),
+    peekLeagues: () => cache.peek(leaguesKey, LeaguesSchema),
 
     getLeagues: () =>
       cache.get(
@@ -82,20 +86,21 @@ export const createSportsDbClient = ({
         async () =>
           parseLeagues(await request(`${root}/all_leagues.php`)).map(withCapturedAlternates),
         // An empty list is an upstream glitch, not data: don't keep it for four hours.
-        { ttlMs: LEAGUES_TTL_MS, keep: (leagues) => leagues.length > 0 },
+        { schema: LeaguesSchema, ttlMs: LEAGUES_TTL_MS, keep: (leagues) => leagues.length > 0 },
       ),
 
-    peekStaleLeagues: () => cache.peekStale<League[]>(leaguesKey),
+    peekStaleLeagues: () => cache.peekStale(leaguesKey, LeaguesSchema),
 
-    peekSeasons: (leagueId) => cache.peek<Season[]>(seasonsKey(leagueId)),
+    peekSeasons: (leagueId) => cache.peek(seasonsKey(leagueId), SeasonsSchema),
 
     getSeasons: (leagueId) => {
       const url = `${root}/search_all_seasons.php?badge=1&id=${encodeURIComponent(leagueId)}`
       return cache.get(seasonsKey(leagueId), async () => parseSeasons(await request(url)), {
+        schema: SeasonsSchema,
         ttlMs: SEASONS_TTL_MS,
       })
     },
 
-    peekStaleSeasons: (leagueId) => cache.peekStale<Season[]>(seasonsKey(leagueId)),
+    peekStaleSeasons: (leagueId) => cache.peekStale(seasonsKey(leagueId), SeasonsSchema),
   }
 }

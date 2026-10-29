@@ -53,6 +53,10 @@ describe('parseLeagues', () => {
     expect(() => parseLeagues('<html>')).toThrow(/unexpected response/)
     expect(() => parseLeagues({ leagues: 'x' })).toThrow(/unexpected response/)
   })
+
+  it('rejects a response without the leagues field, instead of reading it as empty', () => {
+    expect(() => parseLeagues({})).toThrow(/unexpected response/)
+  })
 })
 
 describe('parseSeasons', () => {
@@ -69,6 +73,23 @@ describe('parseSeasons', () => {
 
   it('treats { seasons: null } (unknown league) as no seasons', () => {
     expect(parseSeasons({ seasons: null })).toEqual([])
+  })
+
+  it('rejects a response without the seasons field, so it is not cached as "no badge"', () => {
+    expect(() => parseSeasons({})).toThrow(/unexpected response/)
+  })
+
+  it('skips malformed seasons and keeps the rest', () => {
+    expect(
+      parseSeasons({
+        seasons: [
+          { strSeason: ' 2001-2002 ', strBadge: '' },
+          { strSeason: 2002 },
+          { strBadge: 'x.png' },
+          null,
+        ],
+      }),
+    ).toEqual([{ season: '2001-2002', badgeUrl: null }])
   })
 })
 
@@ -128,6 +149,14 @@ describe('createSportsDbClient', () => {
     expect(client.peekLeagues()).toBeUndefined()
     await expect(client.getLeagues()).resolves.toHaveLength(10)
     expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not cache a seasons response that is missing its field', async () => {
+    const { client, request } = setup()
+    request.mockResolvedValueOnce({})
+    await expect(client.getSeasons('4328')).rejects.toMatchObject({ kind: 'invalid-response' })
+    expect(client.peekSeasons('4328')).toBeUndefined()
+    await expect(client.getSeasons('4328')).resolves.toHaveLength(5)
   })
 
   it('keeps a premium key out of storage and its cache apart from the free one', async () => {
