@@ -70,8 +70,7 @@ const onBackdropClick = (event: MouseEvent) => {
   if (event.target === dialog.value) dialog.value?.close()
 }
 
-// A centred modal that springs in; on phones, a bottom sheet that slides up, easier to reach
-// and to dismiss with a thumb.
+// On phones, a bottom sheet: easier to reach with a thumb.
 const DIALOG = [
   'm-auto max-h-[calc(100dvh-2rem)] w-[min(32rem,100vw-2rem)] rounded-xl border border-line bg-surface p-0 text-ink',
   'shadow-[var(--elevation-lg),0_0_120px_-20px_hsl(var(--hue)_70%_45%/0.35)]',
@@ -80,7 +79,6 @@ const DIALOG = [
   'motion-safe:wide:open:animate-dialog-in motion-safe:phone:open:animate-sheet-in motion-safe:open:backdrop:animate-backdrop-in',
 ]
 
-// A spotlight from above, and a pool of the sport's colour on the floor.
 const STAGE =
   'group/stage relative grid min-h-76 place-items-center p-6 phone:min-h-64 phone:p-5 bg-[conic-gradient(from_180deg_at_50%_-20%,transparent_155deg,rgb(255_255_255/0.07)_172deg,rgb(255_255_255/0.11)_180deg,rgb(255_255_255/0.07)_188deg,transparent_205deg),radial-gradient(16rem_3.5rem_at_50%_78%,hsl(var(--hue)_80%_55%/0.4),transparent_70%)]'
 
@@ -176,9 +174,7 @@ const SEASON =
           />
 
           <figure v-else class="grid w-full justify-items-center gap-4">
-            <!-- Turns toward the pointer; follows it quickly while hovered, settles slowly.
-                 Full width so the badge's percentage size has something to resolve against:
-                 shrink-wrapped, Safari sizes it to 0. -->
+            <!-- Full width: shrink-wrapped, Safari sizes the badge to 0. -->
             <div
               class="tilt w-full transition-transform duration-400 ease-out will-change-transform group-hover/stage:duration-120 motion-reduce:transition-none"
               :style="tiltStyle"

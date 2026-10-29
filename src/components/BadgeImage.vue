@@ -23,7 +23,6 @@ watch(
     }"
     :aria-busy="state === 'loading'"
   >
-    <!-- Transparent PNG badges float above the floor light; each new season's badge flips in. -->
     <img
       v-if="state !== 'error'"
       :key="src"

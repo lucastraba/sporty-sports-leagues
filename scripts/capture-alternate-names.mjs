@@ -1,11 +1,5 @@
-// Captures alternate names for the free key's sample leagues into src/api/alternateNames.json.
-//
-// The free key's all_leagues.php leaves strLeagueAlternate empty; lookupleague.php has it.
-// Fetching those at runtime costs one request per league, and the free key starts answering
-// 429 after about ten requests in a few seconds, which then blocks the badge request. So the
-// names are captured here, once, with requests spaced out, and ship with the app.
-//
-// Run: node scripts/capture-alternate-names.mjs
+// Captures alternate names for the free key's sample leagues into src/api/alternateNames.json,
+// with requests spaced out to stay under the rate limit. Run: node scripts/capture-alternate-names.mjs
 
 import { writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'

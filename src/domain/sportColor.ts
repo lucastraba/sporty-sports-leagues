@@ -1,5 +1,4 @@
-// A stable hue per sport for the sport tags. Known sports get a fitting colour,
-// anything else gets a hue derived from its name, so new sports from the API still look intentional.
+// A stable hue per sport. Unknown sports get one derived from the name.
 const KNOWN: Record<string, number> = {
   Soccer: 145,
   Basketball: 28,

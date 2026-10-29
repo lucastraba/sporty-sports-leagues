@@ -1,14 +1,9 @@
-/* Tailwind entry: design tokens as theme variables, the animations, a few multi-property
-   recipes as custom utilities, and a small base layer. Components style themselves with
-   utility classes built from these tokens. */
+/* Design tokens, animations, a few custom utilities and a small base layer. */
 
 @import 'tailwindcss';
 
-/* The condensed face for headings, scores and league names: Archivo cut down from the
-   variable font to one static instance (width 75, weight 800) with fontTools' instancer,
-   14.5 kB instead of 90 kB. Body text uses the system font and costs nothing to load.
-   Accented Latin beyond Latin-1 is a separate file the browser fetches only when a league
-   name needs it. Archivo is under the OFL; see assets/fonts/OFL.txt. */
+/* Archivo cut to one static instance (width 75, weight 800): 14.5 kB instead of 90 kB.
+   Latin beyond Latin-1 is a separate file, fetched only when needed. OFL: assets/fonts/OFL.txt. */
 @font-face {
   font-family: 'Archivo Display';
   font-style: normal;
@@ -152,7 +147,6 @@
     }
   }
 
-  /* The floodlights flicker on, the way stadium lights warm up. */
   @keyframes lights-on {
     0% {
       opacity: 0;
@@ -175,7 +169,6 @@
     }
   }
 
-  /* Each new season's badge flips in, like turning over a card. */
   @keyframes flip-in {
     from {
       opacity: 0;
@@ -218,16 +211,14 @@
   margin-inline: auto;
 }
 
-/* The condensed scoreboard face for headings and numbers. Line height is left to each use
-   (`leading-none` and friends), so the two never compete. */
+/* Line height is left to each use. */
 @utility type-display {
   font-family: var(--font-condensed);
   font-weight: 800;
   letter-spacing: -0.01em;
 }
 
-/* A strip that scrolls sideways with no scrollbar, fading at the right edge so a cut-off
-   item reads as "scroll for more", with room at the end to scroll the last item clear. */
+/* Sideways scroll with no scrollbar; the right edge fades so a cut-off item reads as "more". */
 @utility scroll-rail {
   display: flex;
   overflow-x: auto;
@@ -256,8 +247,7 @@
   background-size: 200% 100%;
 }
 
-/* Cards deal in one after another (--stagger is each card's position), each with its own
-   timing for the fade and the springy rise. */
+/* --stagger is each card's position in the list. */
 @utility deal-in {
   transition:
     opacity 450ms var(--ease-out),
@@ -266,19 +256,14 @@
   transition-delay: calc(var(--stagger, 0) * 35ms);
 }
 
-/* The floodlit pitch, tilted into perspective behind the hero copy. */
 @utility pitch-tilt {
   transform: perspective(1100px) rotateX(58deg) rotateZ(-24deg);
   transform-origin: 50% 60%;
   mask-image: radial-gradient(closest-side, #000 45%, transparent 100%);
 }
 
-/* Native selects keep their keyboard, screen reader and phone pickers but drop the platform
-   arrow for a chevron drawn next to them. With a mouse or trackpad, browsers with
-   customizable selects (Chromium 135+, current WebKit) also get an option list in the app's
-   style. Phones
-   keep the system picker, which is bigger and familiar, and other browsers their native list. Colours come
-   from --select-* so the light filter bar and the dark hero share one recipe. */
+/* With a mouse, browsers with customizable selects draw the option list in the app's style;
+   everywhere else, including phones, the native list is used. */
 @utility custom-select {
   appearance: none;
 

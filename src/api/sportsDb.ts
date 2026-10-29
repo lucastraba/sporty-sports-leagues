@@ -19,10 +19,8 @@ const SEASONS_TTL_MS = 24 * 60 * 60 * 1000
 const LeaguesSchema = z.array(LeagueSchema)
 const SeasonsSchema = z.array(SeasonSchema)
 
-// The free key's list leaves strLeagueAlternate empty, so "EPL" would find nothing. The names
-// were captured from lookupleague.php by scripts/capture-alternate-names.mjs: fetching them
-// live takes a request per league, and the free key refuses after about ten in a few seconds.
-// They fill in only where the API sent none.
+// The free key's list has no strLeagueAlternate. These were captured by
+// scripts/capture-alternate-names.mjs and fill in only where the API sends none.
 const CAPTURED_ALTERNATES: Record<string, string> = capturedAlternates
 
 const withCapturedAlternates = (league: League): League => {
@@ -51,8 +49,7 @@ export type SportsDbClientOptions = {
   request?: (url: string) => Promise<unknown>
 }
 
-// A failed request right after a burst is reported as the rate limit, not a lost connection,
-// and isn't retried (see createBurstCounter).
+// See createBurstCounter in http.ts.
 const rateLimitAwareRequest = () => {
   const burst = createBurstCounter()
   return (url: string) => {

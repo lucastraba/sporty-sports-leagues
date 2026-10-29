@@ -10,8 +10,7 @@ export const formatSeason = (season: string): string => {
 
 export const seasonsWithBadges = (seasons: Season[]) => seasons.filter((s) => s.badgeUrl)
 
-// The brief allows any season. The API lists seasons oldest first, so the most recent
-// season that has a badge is the last one; it is the most recognisable choice.
+// The API lists seasons oldest first: pick the newest one that has a badge.
 export const defaultBadgeSeason = (seasons: Season[]): Season | undefined => {
   const withBadges = seasonsWithBadges(seasons)
   return withBadges[withBadges.length - 1]

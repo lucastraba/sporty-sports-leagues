@@ -28,8 +28,6 @@ const moreLabel = computed(() =>
   alternates.value.hidden > 0 ? t('card.more', { count: alternates.value.hidden }) : '',
 )
 
-// The card lifts on hover. ::before is a strip of the sport's colour along the top edge that
-// runs full width on hover; ::after is a soft glow of that colour in the corner.
 const CARD = [
   'group relative isolate flex size-full flex-col items-start gap-2 overflow-hidden rounded-lg border border-line bg-surface p-5 text-left shadow-sm',
   'transition-[border-color,box-shadow,translate] duration-250 ease-out motion-reduce:transition-none',
@@ -49,7 +47,6 @@ const CARD = [
     :style="{ '--hue': hue }"
     @click="emit('open', league.id)"
   >
-    <!-- The big sport icon in the corner, like a jersey print. -->
     <SportIcon
       class="absolute -right-7 -bottom-7 -z-1 -rotate-18 text-[8.5rem] text-[hsl(var(--hue)_60%_50%)] opacity-7 transition-[rotate,scale,opacity] duration-500 ease-spring group-hover:opacity-13 motion-safe:group-hover:-rotate-6 motion-safe:group-hover:scale-106 motion-reduce:transition-none"
       :sport="league.sport"

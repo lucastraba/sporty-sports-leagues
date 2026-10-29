@@ -1,5 +1,3 @@
-// Search and filtering, as pure functions so they are trivial to test.
-//
 // Matching rules:
 // - Case- and accent-insensitive: "basquet" finds "Liga Nacional de Básquet".
 // - Every word must match: "premier eng" finds "English Premier League".

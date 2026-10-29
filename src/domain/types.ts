@@ -1,9 +1,7 @@
 import * as z from 'zod/mini'
 
-// The app's own model. API shapes (strLeague, strSport, ...) stop at src/api/parse.ts,
-// so components never deal with nulls, padding or comma-separated strings.
-// The schemas check data read back from localStorage, which the app can't trust either:
-// it may be from an older version of the app, or edited by hand.
+// The app's own model; API shapes stop at src/api/parse.ts. The schemas also check data
+// read back from localStorage, which may come from an older version of the app.
 
 export const LeagueSchema = z.object({
   id: z.string(),

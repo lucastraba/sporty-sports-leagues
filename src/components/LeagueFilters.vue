@@ -100,9 +100,7 @@ const clearSearch = () => {
       >
     </div>
 
-    <!-- A native select: on phones it opens the system picker, and it stays one line however
-         many sports a premium key returns. The selected sport's icon sits inside it. Wide
-         enough for "Todos los deportes (10)" on one line. -->
+    <!-- Wide enough for "Todos los deportes (10)" on one line. -->
     <div class="relative flex min-w-0 flex-[0_1_18rem] items-center max-sm:flex-auto">
       <label class="sr-only" for="league-sport">{{ t('filters.sport') }}</label>
       <SportIcon

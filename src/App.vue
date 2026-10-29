@@ -31,8 +31,7 @@ onUnmounted(() => window.removeEventListener('online', refreshWhenOnline))
 
   <AppHero />
 
-  <!-- The toolbar floats up over the bottom of the hero. minmax(0, …) stops a wide child
-       from widening the page. -->
+  <!-- minmax(0, …) stops a wide child from widening the page. -->
   <main class="page-width relative z-1 -mt-10 grid grid-cols-[minmax(0,1fr)] gap-8 pb-16">
     <LeagueFilters />
     <LeagueResults />

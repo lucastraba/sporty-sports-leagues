@@ -19,7 +19,6 @@ const GRID =
   'grid auto-rows-fr grid-cols-[repeat(auto-fill,minmax(min(100%,17rem),1fr))] gap-4 phone:auto-rows-auto phone:gap-3'
 
 const SHIMMER = 'block shimmer animate-shimmer motion-reduce:animate-none'
-// Sport tile, name, alternate names, action.
 const SKELETON_LINES = [
   'size-11 rounded-md',
   'h-6 w-[85%] rounded-sm',
@@ -67,7 +66,6 @@ const emptyMessage = computed(() => {
 <template>
   <section aria-labelledby="results-heading">
     <div class="mb-5 flex items-end justify-between gap-3 border-b border-line pb-3">
-      <!-- A short red underline on the heading, like a broadcast lower third. -->
       <h2
         id="results-heading"
         class="relative type-display text-2xl leading-none uppercase after:absolute after:-bottom-[calc(--spacing(3)+1px)] after:left-0 after:h-[3px] after:w-12 after:rounded-[3px] after:bg-accent"
@@ -134,8 +132,7 @@ const emptyMessage = computed(() => {
       @action="store.clearFilters()"
     />
 
-    <!-- Cards deal in on first paint, and glide to their new place when a filter changes.
-         Leaving cards drop out of the flow at once, so the others can glide into the gap. -->
+    <!-- Leaving cards drop out of the flow at once, so the others can move into the gap. -->
     <TransitionGroup
       v-else
       id="league-results"

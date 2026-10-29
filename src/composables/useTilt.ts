@@ -1,7 +1,6 @@
 import { computed, ref } from 'vue'
 
-// Tilts an element toward the pointer, like turning a trading card in your hand.
-// Only for a mouse or trackpad, and never with reduced motion.
+// Tilts an element toward the pointer. Mouse or trackpad only, never with reduced motion.
 export const useTilt = (maxDegrees = 14) => {
   const x = ref(0)
   const y = ref(0)

@@ -20,7 +20,6 @@ const stats = computed(() => [
   <header
     class="relative isolate overflow-hidden bg-[radial-gradient(40rem_22rem_at_8%_0%,rgb(228_0_43/0.22),transparent_70%),radial-gradient(60rem_30rem_at_85%_110%,rgb(22_163_74/0.18),transparent_70%),linear-gradient(180deg,#0a0d12_0%,var(--color-night)_100%)] pb-16 text-night-ink max-sm:pb-12"
   >
-    <!-- A floodlit pitch at night, tilted into perspective. Pure decoration. -->
     <div class="pointer-events-none absolute inset-0 -z-1" aria-hidden="true">
       <div
         class="pitch-tilt absolute top-2 -right-56 aspect-[1050/680] w-[min(62rem,120vw)] opacity-95 max-sm:top-12 max-sm:-right-104 max-sm:w-208 max-sm:opacity-60"
@@ -54,8 +53,6 @@ const stats = computed(() => [
           </g>
         </svg>
       </div>
-      <!-- Two floodlight pools, and a vignette that blends the pitch into the night behind
-           the copy. -->
       <div
         class="absolute inset-0 animate-lights-on bg-[radial-gradient(28rem_18rem_at_72%_34%,rgb(255_255_240/0.14),transparent_70%),radial-gradient(22rem_14rem_at_96%_70%,rgb(255_255_240/0.08),transparent_70%)] motion-reduce:animate-none"
       />
@@ -135,7 +132,6 @@ const stats = computed(() => [
         </p>
       </div>
 
-      <!-- Wide screens: the scoreboard sits over the pitch, like a broadcast overlay. -->
       <div class="min-[56rem]:grid min-[56rem]:justify-items-end min-[56rem]:text-right">
         <dl
           class="inline-flex animate-rise-later rounded-lg border border-night-line bg-white/4 backdrop-blur-[8px] motion-reduce:animate-none max-sm:hidden"
@@ -161,7 +157,6 @@ const stats = computed(() => [
           </div>
         </dl>
 
-        <!-- The text shadow keeps it legible over the pitch lines. -->
         <p
           v-if="store.isFreeTier && ready"
           class="mt-3 max-w-[22rem] text-sm text-night-muted [text-shadow:0_1px_6px_var(--color-night)] max-sm:mt-0 max-sm:text-xs"

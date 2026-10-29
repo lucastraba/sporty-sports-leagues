@@ -1,15 +1,6 @@
-// Request cache shared by every endpoint.
-//
-// - One entry per key, with a TTL.
-// - Concurrent callers share one in-flight request (two quick clicks = one fetch).
-// - Entries are mirrored to localStorage, so a reload inside the TTL makes no request
-//   and can render synchronously via peek().
-// - Every read names the schema it expects. A stored entry that doesn't match it (an older
-//   version of the app, a hand edit) is dropped and refetched instead of reaching the UI.
-// - Expired entries stay in storage until a fresh response replaces them: peekStale() returns
-//   them, so the app can show the last list it had when the network is gone.
-// - Failures are never cached, so "Try again" really tries again. Neither is a value the
-//   caller marks as not worth keeping (an empty list from a glitch upstream).
+// Request cache for every endpoint: a TTL per key, one shared in-flight request per key,
+// and a localStorage mirror checked against a schema on read. Failures are never cached.
+// Expired entries stay in storage until replaced; peekStale() reads them for the offline fallback.
 
 import * as z from 'zod/mini'
 
@@ -70,7 +61,6 @@ export const createRequestCache = ({
     }
   }
 
-  // Any entry, fresh or expired. Expired ones are kept: they are the offline fallback.
   // Memory only ever holds values this session loaded, so only storage is checked.
   const read = <T>(key: string, schema: Schema<T>): Entry<T> | undefined => {
     const hit = memory.get(key)

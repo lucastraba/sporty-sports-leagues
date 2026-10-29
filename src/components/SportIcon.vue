@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-// Line icons on a 24px grid. Sports without their own icon get the trophy, so a new sport
-// from the API still looks deliberate. Always decorative: the sport's name is next to it.
+// Sports without their own icon get the trophy. Decorative: the name is always next to it.
 const props = defineProps<{ sport: string }>()
 
 const OVAL_BALL = 'oval'

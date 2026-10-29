@@ -46,8 +46,7 @@ export const useLeaguesStore = defineStore('leagues', () => {
     if (selectedId.value && !selectedLeague.value) selectedId.value = null
   }
 
-  // On a phone that just lost signal, the list from this morning beats an error screen.
-  // The UI says how old it is and offers a retry.
+  // When the fetch fails, falls back to the last saved list, however old.
   const fetchLeagues = async () => {
     try {
       leagues.value = await api.getLeagues()

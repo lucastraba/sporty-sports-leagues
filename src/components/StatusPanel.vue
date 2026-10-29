@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-// Empty, error and "no badge" states. The illustrations are sports props: a red card for
-// errors, an empty goal for no results, a blank crest for a missing badge.
+// Empty, error and "no badge" states.
 const props = withDefaults(
   defineProps<{
     title: string
