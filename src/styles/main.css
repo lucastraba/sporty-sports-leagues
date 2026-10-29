@@ -1,0 +1,451 @@
+/* Tailwind entry: design tokens as theme variables, the animations, a few multi-property
+   recipes as custom utilities, and a small base layer. Components style themselves with
+   utility classes built from these tokens. */
+
+@import 'tailwindcss';
+
+/* The condensed face for headings, scores and league names: Archivo cut down from the
+   variable font to one static instance (width 75, weight 800) with fontTools' instancer,
+   14.5 kB instead of 90 kB. Body text uses the system font and costs nothing to load.
+   Accented Latin beyond Latin-1 is a separate file the browser fetches only when a league
+   name needs it. Archivo is under the OFL; see assets/fonts/OFL.txt. */
+@font-face {
+  font-family: 'Archivo Display';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('../assets/fonts/archivo-display-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Archivo Display';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('../assets/fonts/archivo-display-latin-ext.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* Only the app's own palette, so a stray `bg-blue-500` can't sneak past the tokens. */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-canvas: #f2f3f6;
+  --color-surface: #ffffff;
+  --color-surface-muted: #eceef2;
+  --color-line: #e1e4ea;
+  --color-line-strong: #c5cbd4;
+  --color-ink: #0e1116;
+  --color-ink-muted: #545c69;
+  --color-accent: #e4002b;
+  --color-accent-fill: #e4002b; /* behind white text: 4.8:1 */
+  --color-accent-ink: #c40025;
+  --color-accent-glow: rgb(228 0 43 / 0.35);
+  --color-on-accent: #ffffff;
+  --color-focus: #1f6feb;
+  --color-focus-ring: rgb(31 111 235 / 0.3);
+  --color-highlight: #ffe58a;
+  --color-danger-soft: #fff4f4;
+  --color-danger-line: #f2b8b8;
+  --color-glass: rgb(255 255 255 / 0.94);
+  /* The brand red that stays the same in both themes (the red card illustration). */
+  --color-brand: #e4002b;
+
+  /* The stadium: the hero, the dialog's stage and the footer stay dark in both themes. */
+  --color-night: #07090d;
+  --color-night-raised: #10141b;
+  --color-night-line: rgb(255 255 255 / 0.1);
+  --color-night-ink: #f4f6f9;
+  --color-night-muted: #a9b1bd;
+  --color-night-accent: #ff8098;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-condensed: 'Archivo Display', var(--font-sans);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Sizes only: line height is set where it matters. */
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(2.75rem, 1.6rem + 5vw, 5.25rem);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* Values switch with the theme below, so the shadows read them through variables. */
+  --shadow-*: initial;
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+  --shadow-float: var(--elevation-float);
+
+  /* Nothing loops except loading placeholders, and every animation is off with reduced
+     motion (components add `motion-reduce:animate-none`). */
+  --animate-pulse: pulse-soft 1.2s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  --animate-rise: rise 700ms var(--ease-out) both;
+  --animate-rise-skewed: rise-skewed 700ms 90ms var(--ease-out) both;
+  --animate-rise-late: rise 700ms 160ms var(--ease-out) both;
+  --animate-rise-later: rise 700ms 240ms var(--ease-out) both;
+  --animate-draw-lines: draw-lines 1.8s 0.15s var(--ease-out) both;
+  --animate-fade-in-late: fade-in 600ms 1.4s ease-out both;
+  --animate-lights-on: lights-on 1.2s 0.1s steps(1, end) both;
+  --animate-art-in: art-in 600ms var(--ease-spring) both;
+  --animate-flip-in: flip-in 650ms var(--ease-spring);
+  --animate-dialog-in: dialog-in 320ms var(--ease-spring);
+  --animate-sheet-in: sheet-in 380ms var(--ease-out);
+  --animate-backdrop-in: fade-in 250ms ease-out;
+
+  @keyframes pulse-soft {
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
+  @keyframes rise-skewed {
+    from {
+      opacity: 0;
+      transform: translateY(16px) skewX(-8deg);
+    }
+  }
+
+  @keyframes draw-lines {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* The floodlights flicker on, the way stadium lights warm up. */
+  @keyframes lights-on {
+    0% {
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.6;
+    }
+    28% {
+      opacity: 0.15;
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes art-in {
+    from {
+      opacity: 0;
+      transform: scale(0.6) rotate(-10deg);
+    }
+  }
+
+  /* Each new season's badge flips in, like turning over a card. */
+  @keyframes flip-in {
+    from {
+      opacity: 0;
+      transform: perspective(600px) rotateY(-70deg) scale(0.85);
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.96);
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+}
+
+/* The "/" shortcut hint means nothing without a keyboard: touch screens, plus phone widths
+   (`phone:`) for the cases a touch device reports a hover-capable pointer. */
+@custom-variant touch {
+  @media (hover: none) {
+    @slot;
+  }
+  @media (pointer: coarse) {
+    @slot;
+  }
+}
+
+/* Phones: the dialog becomes a bottom sheet and the league grid a single column. */
+@custom-variant phone (@media (width <= 36rem));
+@custom-variant wide (@media (width > 36rem));
+
+/* Page column shared by the hero, main content and footer. */
+@utility page-width {
+  width: min(76rem, 100% - 2 * --spacing(4));
+  margin-inline: auto;
+}
+
+/* The condensed scoreboard face for headings and numbers. Line height is left to each use
+   (`leading-none` and friends), so the two never compete. */
+@utility type-display {
+  font-family: var(--font-condensed);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* A strip that scrolls sideways with no scrollbar, fading at the right edge so a cut-off
+   item reads as "scroll for more", with room at the end to scroll the last item clear. */
+@utility scroll-rail {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 2.5rem), transparent);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &::after {
+    content: '';
+    flex: 0 0 2rem;
+  }
+}
+
+/* Loading placeholder fill. */
+@utility shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 25%,
+    var(--color-line) 50%,
+    var(--color-surface-muted) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* Cards deal in one after another (--stagger is each card's position), each with its own
+   timing for the fade and the springy rise. */
+@utility deal-in {
+  transition:
+    opacity 450ms var(--ease-out),
+    translate 550ms var(--ease-spring),
+    scale 550ms var(--ease-spring);
+  transition-delay: calc(var(--stagger, 0) * 35ms);
+}
+
+/* The floodlit pitch, tilted into perspective behind the hero copy. */
+@utility pitch-tilt {
+  transform: perspective(1100px) rotateX(58deg) rotateZ(-24deg);
+  transform-origin: 50% 60%;
+  mask-image: radial-gradient(closest-side, #000 45%, transparent 100%);
+}
+
+/* Native selects keep their keyboard, screen reader and phone pickers but drop the platform
+   arrow for a chevron drawn next to them. With a mouse or trackpad, browsers with
+   customizable selects (Chromium 135+, current WebKit) also get an option list in the app's
+   style. Phones
+   keep the system picker, which is bigger and familiar, and other browsers their native list. Colours come
+   from --select-* so the light filter bar and the dark hero share one recipe. */
+@utility custom-select {
+  appearance: none;
+
+  @supports (appearance: base-select) {
+    @media (pointer: fine) {
+      &,
+      &::picker(select) {
+        appearance: base-select;
+      }
+
+      display: flex;
+      align-items: center;
+      padding-block: 0;
+
+      &::picker-icon {
+        display: none;
+      }
+
+      &::picker(select) {
+        margin-block: --spacing(1.5);
+        padding: --spacing(1);
+        border: 1px solid var(--select-line, var(--color-line));
+        border-radius: var(--radius-lg);
+        background: var(--select-bg, var(--color-surface));
+        box-shadow: var(--elevation-lg);
+      }
+
+      & option {
+        display: flex;
+        align-items: center;
+        gap: --spacing(2.5);
+        min-height: --spacing(10);
+        padding-inline: --spacing(3);
+        border-radius: calc(var(--radius-lg) - --spacing(1));
+        color: var(--select-muted, var(--color-ink-muted));
+        font-weight: 600;
+      }
+
+      & option:hover,
+      & option:focus-visible {
+        outline: none;
+        background: var(--select-hover, var(--color-surface-muted));
+        color: var(--select-ink, var(--color-ink));
+      }
+
+      & option:checked {
+        color: var(--select-ink, var(--color-ink));
+      }
+
+      & option::checkmark {
+        order: 1;
+        margin-inline-start: auto;
+        padding-inline-start: --spacing(3);
+        color: var(--select-check, var(--color-accent-ink));
+      }
+    }
+  }
+}
+
+/* The hero's dark bar, in both themes. `color-scheme` darkens the native list where the
+   styled one is not supported. */
+@utility night-select {
+  color-scheme: dark;
+  --select-bg: var(--color-night-raised);
+  --select-line: var(--color-night-line);
+  --select-ink: var(--color-night-ink);
+  --select-muted: var(--color-night-muted);
+  --select-hover: rgb(255 255 255 / 0.08);
+  --select-check: var(--color-night-accent);
+}
+
+/* The badge turns toward the pointer; --tilt-x and --tilt-y come from useTilt(). */
+@utility tilt {
+  transform: perspective(700px) rotateX(calc(var(--tilt-y, 0) * 1deg))
+    rotateY(calc(var(--tilt-x, 0) * 1deg));
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Sport colours: one hue per sport (src/domain/sportColor.ts), these set the lightness. */
+  --sport-text-lightness: 28%;
+  --sport-soft-lightness: 93%;
+  --sport-soft-alpha: 1;
+
+  --elevation-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --elevation-md: 0 2px 4px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.08);
+  --elevation-lg: 0 32px 64px rgb(16 24 40 / 0.28);
+  --elevation-float: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 12px 32px rgb(16 24 40 / 0.14);
+}
+
+/* Utilities read the tokens through var(), so the dark theme only swaps values. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: #0b0d11;
+    --color-surface: #14171d;
+    --color-surface-muted: #1d2129;
+    --color-line: #262b34;
+    --color-line-strong: #3a414c;
+    --color-ink: #eef0f4;
+    --color-ink-muted: #a3abb8;
+    --color-accent: #ff2e55;
+    --color-accent-fill: #d6002a; /* the bright red only reaches 3.6:1 behind white text */
+    --color-accent-ink: #ff6b83;
+    --color-accent-glow: rgb(255 46 85 / 0.35);
+    --color-focus: #58a6ff;
+    --color-focus-ring: rgb(88 166 255 / 0.35);
+    --color-highlight: #6b5300;
+    --color-danger-soft: #2a1618;
+    --color-danger-line: #6b2a30;
+    --color-glass: rgb(20 23 29 / 0.94);
+
+    --sport-text-lightness: 74%;
+    --sport-soft-lightness: 45%;
+    --sport-soft-alpha: 0.2;
+
+    --elevation-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --elevation-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+    --elevation-lg: 0 32px 64px rgb(0 0 0 / 0.6);
+    --elevation-float: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px rgb(0 0 0 / 0.5);
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    color: var(--color-ink);
+    background: var(--color-canvas);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Stop the page scrolling behind an open modal. */
+  body:has(dialog[open]) {
+    overflow: hidden;
+  }
+
+  code {
+    font-size: 0.9em;
+  }
+
+  a {
+    color: var(--color-accent-ink);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  a:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    color: #fff;
+    background: var(--color-accent-fill);
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
