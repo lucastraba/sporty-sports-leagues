@@ -22,6 +22,38 @@ export type RequestOptions = {
   retryDelayMs?: number
   fetchImpl?: typeof fetch
   sleep?: (ms: number) => Promise<void>
+  /**
+   * Asked when fetch fails before any response arrives. True means the failure is probably a
+   * rate limit the browser couldn't show: a 429 sent without CORS headers.
+   */
+  looksRateLimited?: () => boolean
+}
+
+const RATE_LIMIT_MESSAGE = 'Too many requests to TheSportsDB. Wait a minute and try again.'
+
+// Counts requests in a sliding window. TheSportsDB's free key answers a burst with HTTP 429
+// and no CORS header, so the browser can't read the status and fetch fails as if the
+// connection had dropped. A failure right after a burst is taken to be that rate limit.
+export const createBurstCounter = ({
+  limit = 8,
+  windowMs = 60_000,
+  now = Date.now,
+}: { limit?: number; windowMs?: number; now?: () => number } = {}) => {
+  const started: number[] = []
+  const prune = () => {
+    const since = now() - windowMs
+    while ((started[0] ?? Infinity) <= since) started.shift()
+  }
+  return {
+    count: () => {
+      prune()
+      started.push(now())
+    },
+    isBurst: () => {
+      prune()
+      return started.length >= limit
+    },
+  }
 }
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
@@ -36,6 +68,7 @@ const attemptOnce = async (
   fetchImpl: typeof fetch,
   timeoutMs: number,
   outer?: AbortSignal,
+  looksRateLimited?: () => boolean,
 ): Promise<unknown> => {
   const controller = new AbortController()
   let timedOut = false
@@ -54,16 +87,14 @@ const attemptOnce = async (
     } catch (error) {
       if (outer?.aborted) throw error
       if (timedOut) throw new ApiError('timeout', 'TheSportsDB took too long to respond.')
+      // Offline is certain; anything else might be a 429 the browser hid.
+      if (globalThis.navigator?.onLine !== false && looksRateLimited?.()) {
+        throw new ApiError('rate-limit', RATE_LIMIT_MESSAGE)
+      }
       throw new ApiError('network', 'Could not reach TheSportsDB. Check your connection.')
     }
 
-    if (response.status === 429) {
-      throw new ApiError(
-        'rate-limit',
-        'Too many requests: the free API allows 30 per minute. Try again in a moment.',
-        429,
-      )
-    }
+    if (response.status === 429) throw new ApiError('rate-limit', RATE_LIMIT_MESSAGE, 429)
     if (!response.ok) {
       throw new ApiError(
         'http',
@@ -95,11 +126,17 @@ export const getJson = async (url: string, options: RequestOptions = {}): Promis
 
   for (let attempt = 0; ; attempt++) {
     try {
-      return await attemptOnce(url, fetchImpl, options.timeoutMs ?? 10_000, options.signal)
+      return await attemptOnce(
+        url,
+        fetchImpl,
+        options.timeoutMs ?? 10_000,
+        options.signal,
+        options.looksRateLimited,
+      )
     } catch (error) {
       // A caller-initiated abort is not an API failure: pass it through untouched.
       if (!(error instanceof ApiError)) throw error
-      // 429 is deliberately not retried: retrying immediately only extends the lockout.
+      // A rate limit is deliberately not retried: retrying at once only extends the lockout.
       if (attempt >= retries || !isTransient(error)) throw error
       await sleep(retryDelayMs * 2 ** attempt)
     }

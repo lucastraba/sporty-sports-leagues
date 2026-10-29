@@ -75,7 +75,7 @@ export default {
   errors: {
     network: 'Could not reach TheSportsDB. Check your connection.',
     timeout: 'TheSportsDB took too long to respond.',
-    rateLimit: 'Too many requests: the free API allows 30 per minute. Try again in a moment.',
+    rateLimit: 'Too many requests to TheSportsDB’s free API. Wait a minute and try again.',
     http: 'TheSportsDB responded with HTTP {status}.',
     invalidResponse: 'TheSportsDB sent an unexpected response.',
     unknown: 'Something went wrong.',

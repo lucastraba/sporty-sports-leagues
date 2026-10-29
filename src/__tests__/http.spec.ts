@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { ApiError, getJson } from '@/api/http'
+import { ApiError, createBurstCounter, getJson } from '@/api/http'
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -42,8 +42,28 @@ describe('getJson', () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => json({}, 429))
     const error = await rejection(getJson('/x', { fetchImpl, sleep: noSleep }))
     expect(error).toMatchObject({ kind: 'rate-limit', status: 429 })
-    expect(error.message).toMatch(/30 per minute/)
+    expect(error.message).toMatch(/Wait a minute/)
     expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+
+  // The free key's 429 has no CORS header, so in a browser fetch rejects like a lost connection.
+  it('reports a failure right after a burst as the rate limit, without retrying', async () => {
+    const fetchImpl = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'))
+    const error = await rejection(
+      getJson('/x', { fetchImpl, sleep: noSleep, looksRateLimited: () => true }),
+    )
+    expect(error).toMatchObject({ kind: 'rate-limit' })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+
+  it('still reports a lost connection when the browser says it is offline', async () => {
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    const fetchImpl = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'))
+    const error = await rejection(
+      getJson('/x', { fetchImpl, sleep: noSleep, retries: 0, looksRateLimited: () => true }),
+    )
+    expect(error).toMatchObject({ kind: 'network' })
+    onLine.mockRestore()
   })
 
   it('does not retry 4xx', async () => {
@@ -82,5 +102,19 @@ describe('getJson', () => {
     const error = await rejection(getJson('/x', { fetchImpl, signal: controller.signal }))
     expect(error).not.toBeInstanceOf(ApiError)
     expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('createBurstCounter', () => {
+  it('flags a burst once enough requests start inside the window', () => {
+    let time = 0
+    const burst = createBurstCounter({ limit: 3, windowMs: 1000, now: () => time })
+    burst.count()
+    burst.count()
+    expect(burst.isBurst()).toBe(false)
+    burst.count()
+    expect(burst.isBurst()).toBe(true)
+    time = 1000
+    expect(burst.isBurst()).toBe(false)
   })
 })

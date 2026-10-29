@@ -1,6 +1,6 @@
 import type { League, Season } from '@/domain/types'
 import { createRequestCache, type RequestCache, type StaleEntry } from './cache'
-import { getJson } from './http'
+import { createBurstCounter, getJson } from './http'
 import { parseLeagues, parseSeasons, splitAlternateNames } from './parse'
 import capturedAlternates from './alternateNames.json'
 
@@ -47,11 +47,21 @@ export type SportsDbClientOptions = {
   request?: (url: string) => Promise<unknown>
 }
 
+// A failed request right after a burst is reported as the rate limit, not a lost connection,
+// and isn't retried (see createBurstCounter).
+const rateLimitAwareRequest = () => {
+  const burst = createBurstCounter()
+  return (url: string) => {
+    burst.count()
+    return getJson(url, { looksRateLimited: burst.isBurst })
+  }
+}
+
 export const createSportsDbClient = ({
   apiKey = FREE_API_KEY,
   baseUrl = API_BASE_URL,
   cache = createRequestCache(),
-  request = (url) => getJson(url),
+  request = rateLimitAwareRequest(),
 }: SportsDbClientOptions = {}): SportsDbClient => {
   const root = `${baseUrl}/${encodeURIComponent(apiKey)}`
   const isFreeTier = apiKey === FREE_API_KEY

@@ -75,7 +75,7 @@ const es: typeof en = {
     network: 'No se pudo conectar con TheSportsDB. Revisa tu conexión.',
     timeout: 'TheSportsDB tardó demasiado en responder.',
     rateLimit:
-      'Demasiadas solicitudes: la API gratuita permite 30 por minuto. Prueba de nuevo en un momento.',
+      'Demasiadas solicitudes a la API gratuita de TheSportsDB. Espera un minuto y vuelve a intentarlo.',
     http: 'TheSportsDB respondió con HTTP {status}.',
     invalidResponse: 'TheSportsDB envió una respuesta inesperada.',
     unknown: 'Algo salió mal.',
